@@ -1,0 +1,21 @@
+# Автоматически определять текст и переводы строк
+* text=auto
+
+# Проект Windows — исходники в CRLF
+*.cs      text eol=crlf
+*.csproj  text eol=crlf
+*.xaml    text eol=crlf
+*.ps1     text eol=crlf
+
+# Документация и конфиги — в LF
+*.md      text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# Бинарные файлы
+*.ico     binary
+*.png     binary
+*.jpg     binary
+*.exe     binary
+*.dll     binary
+*.zip     binary

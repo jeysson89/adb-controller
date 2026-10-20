@@ -1,0 +1,796 @@
+﻿<Window x:Class="AdbController.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ADB Controller" Icon="app.ico" Height="860" Width="1320"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource WindowBg}">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0"
+                Background="{DynamicResource HeaderBg}"
+                BorderBrush="{DynamicResource BorderColor}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="14,10"
+                Margin="0,0,0,8">
+            <DockPanel LastChildFill="False">
+                <TextBlock DockPanel.Dock="Left"
+                           Text="ADB Controller"
+                           FontSize="16" FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimary}"
+                           VerticalAlignment="Center"/>
+                <TextBlock x:Name="TxtHeaderStatus" DockPanel.Dock="Left"
+                           Margin="16,0,0,0"
+                           Foreground="{DynamicResource TextSecondary}"
+                           VerticalAlignment="Center"/>
+                <Button x:Name="BtnTheme" DockPanel.Dock="Right"
+                        Content="☀ Светлая" Width="130"
+                        Click="BtnTheme_Click" ToolTip="Переключить тему оформления (тёмная / светлая)"/>
+            </DockPanel>
+        </Border>
+
+        <TabControl Grid.Row="1" Margin="0" Padding="0">
+                        <TabItem Header="Устройства">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <WrapPanel Grid.Row="0" Margin="0,0,0,8">
+                        <Button Content="⟳ Обновить список" Width="150" Click="BtnRefreshDevices_Click"/>
+                        <TextBlock Text="Wi-Fi:" Margin="14,0,6,0"/>
+                        <TextBox x:Name="TxtWifiIp" Width="150" Text="192.168.1.100"/>
+                        <TextBlock Text=":" Margin="4,0,4,0"/>
+                        <TextBox x:Name="TxtWifiPort" Width="100" Text="5555"/>
+                        <Button Content="Включить tcpip" Width="130" Margin="8,0,0,0" Click="BtnTcpip_Click"/>
+                        <Button Content="Подключиться" Width="120" Margin="6,0,0,0" Click="BtnConnect_Click"/>
+                        <Button Content="Отключиться" Width="120" Margin="6,0,0,0" Click="BtnDisconnect_Click"/>
+                    </WrapPanel>
+                    <TextBlock Grid.Row="1"
+                               Text="Выберите устройство из списка"
+                               Margin="2,0,0,6"
+                               FontStyle="Italic"
+                               Foreground="{DynamicResource TextSecondary}"/>
+                    <ListBox x:Name="LstDevices" Grid.Row="2"
+                             SelectionChanged="LstDevices_SelectionChanged"/>
+                    <TextBlock x:Name="TxtStatus" Grid.Row="3" Margin="0,8,0,0"
+                               Foreground="{DynamicResource TextSecondary}"/>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Инфо">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- ШАПКА УСТРОЙСТВА -->
+                    <Border Grid.Row="0"
+                            Background="{DynamicResource PanelBg}"
+                            BorderBrush="{DynamicResource BorderColor}"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="14"
+                            Margin="0,0,0,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0"
+                                    Width="86" Height="150"
+                                    Background="{DynamicResource WindowBg}"
+                                    BorderBrush="{DynamicResource BorderColor}"
+                                    BorderThickness="2"
+                                    CornerRadius="12">
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <TextBlock Text="📱" FontSize="44" HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="TxtMonBatteryIcon" Text="—"
+                                               FontSize="22" Margin="0,6,0,0"
+                                               HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+
+                            <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                                <TextBlock x:Name="TxtMonModel" Text="Выберите устройство"
+                                           FontSize="20" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="TxtMonAndroid" Text="—" FontSize="12"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           Margin="0,2,0,0"/>
+                                <TextBlock x:Name="TxtMonBatteryLine" Text="🔋 — · 🌡 — · —"
+                                           FontSize="14" Margin="0,8,0,0"/>
+                                <ProgressBar x:Name="PrgBattery" Height="8" Margin="0,4,0,0"
+                                             Minimum="0" Maximum="100" Value="0"/>
+                                <TextBlock x:Name="TxtMonBatteryDetails" Text="—"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           Margin="0,4,0,0"/>
+                                <TextBlock x:Name="TxtMonUptime" Text="⏱ Uptime: —"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           Margin="0,2,0,0"/>
+                                <DockPanel Margin="0,8,0,0">
+                                    <TextBlock x:Name="TxtMonUpdated" DockPanel.Dock="Left"
+                                               Text="⏱ —"
+                                               Foreground="{DynamicResource TextSecondary}"
+                                               VerticalAlignment="Center"/>
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                        <CheckBox x:Name="ChkMonAuto" Content="Авто"
+                                                  VerticalAlignment="Center" IsChecked="False"
+                                                  Checked="ChkMonAuto_Changed"
+                                                  Unchecked="ChkMonAuto_Changed"
+                                                  ToolTip="Автоматически обновлять метрики"/>
+                                        <TextBox x:Name="TxtMonInterval" Width="90" Text="5000"
+                                                 TextAlignment="Center" Margin="6,0,0,0"/>
+                                        <TextBlock Text="мс" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                                        <Button Content="OK" Width="45" Margin="6,0,0,0"
+                                                Click="BtnMonApply_Click"/>
+                                        <Button Content="⟳ Обновить" Width="110" Margin="6,0,0,0"
+                                                Click="BtnMonRefresh_Click"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- 4 КАРТОЧКИ МЕТРИК -->
+                    <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,8">
+                        <Border Background="{DynamicResource PanelBg}"
+                                BorderBrush="{DynamicResource BorderColor}"
+                                BorderThickness="1" CornerRadius="8"
+                                Padding="12,10" Margin="0,0,4,0">
+                            <StackPanel>
+                                <TextBlock Text="💾 RAM" FontWeight="SemiBold" FontSize="13"/>
+                                <TextBlock x:Name="TxtRam" Text="—" FontSize="16"
+                                           FontWeight="SemiBold" Margin="0,4,0,2"/>
+                                <ProgressBar x:Name="PrgRam" Height="6" Minimum="0" Maximum="100" Value="0"/>
+                                <TextBlock x:Name="TxtRamDetail" Text="—" FontSize="11"
+                                           Foreground="{DynamicResource TextSecondary}" Margin="0,4,0,0"/>
+                                <Canvas x:Name="CvsRamSpark" Height="32" Margin="0,4,0,0"
+                                        ClipToBounds="True">
+                                    <Polyline x:Name="PlRamSpark"
+                                              Stroke="{DynamicResource Accent}"
+                                              StrokeThickness="1.5"/>
+                                </Canvas>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{DynamicResource PanelBg}"
+                                BorderBrush="{DynamicResource BorderColor}"
+                                BorderThickness="1" CornerRadius="8"
+                                Padding="12,10" Margin="4,0,4,0">
+                            <StackPanel>
+                                <TextBlock Text="⚙️ CPU" FontWeight="SemiBold" FontSize="13"/>
+                                <TextBlock x:Name="TxtCpu" Text="—" FontSize="16"
+                                           FontWeight="SemiBold" Margin="0,4,0,2"/>
+                                <ProgressBar x:Name="PrgCpu" Height="6" Minimum="0" Maximum="100" Value="0"/>
+                                <TextBlock x:Name="TxtCpuDetail" Text="—" FontSize="11"
+                                           Foreground="{DynamicResource TextSecondary}" Margin="0,4,0,0"/>
+                                <Canvas x:Name="CvsCpuSpark" Height="32" Margin="0,4,0,0"
+                                        ClipToBounds="True">
+                                    <Polyline x:Name="PlCpuSpark"
+                                              Stroke="{DynamicResource Accent}"
+                                              StrokeThickness="1.5"/>
+                                </Canvas>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{DynamicResource PanelBg}"
+                                BorderBrush="{DynamicResource BorderColor}"
+                                BorderThickness="1" CornerRadius="8"
+                                Padding="12,10" Margin="4,0,4,0">
+                            <StackPanel>
+                                <TextBlock Text="💿 Диск" FontWeight="SemiBold" FontSize="13"/>
+                                <TextBlock x:Name="TxtDisk" Text="—" FontSize="16"
+                                           FontWeight="SemiBold" Margin="0,4,0,2"/>
+                                <ProgressBar x:Name="PrgDisk" Height="6" Minimum="0" Maximum="100" Value="0"/>
+                                <TextBlock x:Name="TxtDiskDetail" Text="—" FontSize="11"
+                                           Foreground="{DynamicResource TextSecondary}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{DynamicResource PanelBg}"
+                                BorderBrush="{DynamicResource BorderColor}"
+                                BorderThickness="1" CornerRadius="8"
+                                Padding="12,10" Margin="4,0,0,0">
+                            <StackPanel>
+                                <TextBlock Text="📡 Сеть" FontWeight="SemiBold" FontSize="13"/>
+                                <TextBlock x:Name="TxtNetRx" Text="↓ —" FontSize="16"
+                                           FontWeight="SemiBold" Margin="0,4,0,2"/>
+                                <TextBlock x:Name="TxtNetTx" Text="↑ —" FontSize="14"
+                                           Foreground="{DynamicResource TextSecondary}"/>
+                                <TextBlock x:Name="TxtNetRate" Text="—"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           Margin="0,4,0,0"/>
+                                <TextBlock Text="всего с загрузки" FontSize="10"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <!-- ТОП-5 ПРИЛОЖЕНИЙ -->
+                    <Expander Grid.Row="2" Header="🔝 Топ-5 приложений (по CPU / RAM)"
+                              Margin="0,0,0,8" IsExpanded="True">
+                        <Grid Margin="4,6,4,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="🔥 По загрузке CPU" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                                <ItemsControl x:Name="LstTopCpu">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <DockPanel Margin="0,2">
+                                                <TextBlock Text="{Binding Rank}" Width="22"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource TextSecondary}"/>
+                                                <TextBlock Text="{Binding Value}" Width="70"
+                                                           FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
+                                            </DockPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="💾 По памяти (PSS)" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                                <ItemsControl x:Name="LstTopMem">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <DockPanel Margin="0,2">
+                                                <TextBlock Text="{Binding Rank}" Width="22"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource TextSecondary}"/>
+                                                <TextBlock Text="{Binding Value}" Width="70"
+                                                           FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
+                                            </DockPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Grid>
+                    </Expander>
+
+                    <!-- СЫРЫЕ DUMPSYS -->
+                    <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <Expander Header="🔋 dumpsys battery" Margin="0,0,0,4" IsExpanded="False">
+                                <TextBox x:Name="TxtDumpBattery" Height="150" IsReadOnly="True"
+                                         FontFamily="Consolas" AcceptsReturn="True"
+                                         VerticalScrollBarVisibility="Auto"/>
+                            </Expander>
+                            <Expander Header="💾 dumpsys meminfo" Margin="0,0,0,4" IsExpanded="False">
+                                <TextBox x:Name="TxtDumpMeminfo" Height="150" IsReadOnly="True"
+                                         FontFamily="Consolas" AcceptsReturn="True"
+                                         VerticalScrollBarVisibility="Auto"/>
+                            </Expander>
+                            <Expander Header="⚙️ dumpsys cpuinfo" Margin="0,0,0,4" IsExpanded="False">
+                                <TextBox x:Name="TxtDumpCpuinfo" Height="150" IsReadOnly="True"
+                                         FontFamily="Consolas" AcceptsReturn="True"
+                                         VerticalScrollBarVisibility="Auto"/>
+                            </Expander>
+                            <Expander Header="💿 df /data (диск)" Margin="0,0,0,4" IsExpanded="False">
+                                <TextBox x:Name="TxtDumpDiskstats" Height="100" IsReadOnly="True"
+                                         FontFamily="Consolas" AcceptsReturn="True"
+                                         VerticalScrollBarVisibility="Auto"/>
+                            </Expander>
+                            <Expander Header="📡 cat /proc/net/dev (сеть)" Margin="0,0,0,4" IsExpanded="False">
+                                <TextBox x:Name="TxtDumpNetstats" Height="150" IsReadOnly="True"
+                                         FontFamily="Consolas" AcceptsReturn="True"
+                                         VerticalScrollBarVisibility="Auto"/>
+                            </Expander>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="APK">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="⟳ Обновить список" Width="160" Click="BtnRefreshPackages_Click" ToolTip="Обновить список установленных приложений"/>
+                        <Button Content="📦 Установить APK..." Width="180" Margin="6,0,0,0" Click="BtnInstallApk_Click" ToolTip="Установить APK-файл на устройство (adb install -r)"/>
+                        <Button Content="🔍 Найти рекламные" Width="180" Margin="6,0,0,0"
+                                Click="BtnFindSuspicious_Click"
+                                ToolTip="Найти пакеты с ads / tracker / analytics / metric / suggest / recommend в имени"/>
+                        <Button Content="↺ Показать все" Width="140" Margin="6,0,0,0"
+                                Click="BtnShowAllPackages_Click"
+                                ToolTip="Сбросить фильтр и показать все пакеты"/>
+                        <CheckBox x:Name="ChkSystemApps"
+                                  Content="Системные приложения"
+                                  Margin="12,0,0,0" IsChecked="False"
+                                  Checked="ChkSystemApps_Changed"
+                                  Unchecked="ChkSystemApps_Changed"/>
+                        <CheckBox x:Name="ChkAutoLoadPackages"
+                                  Content="Авто-загрузка"
+                                  Margin="12,0,0,0" IsChecked="True"/>
+                        <TextBlock x:Name="TxtPackageCount" Margin="12,0,0,0"
+                                   Foreground="{DynamicResource TextSecondary}"/>
+                    </StackPanel>
+                    <ProgressBar x:Name="PrgApk" Grid.Row="1" Margin="0,6,0,0"
+                                 Visibility="Collapsed" IsIndeterminate="False"/>
+                    <ListBox x:Name="LstPackages" Grid.Row="2" Margin="0,6,0,0"
+                             SelectionMode="Extended"
+                             SelectionChanged="LstPackages_SelectionChanged"
+                             DisplayMemberPath="Display">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem" >
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSuspicious}" Value="True">
+                                        <Setter Property="Foreground" Value="#E53935"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsFrozen}" Value="True">
+                                        <Setter Property="Foreground" Value="#1E88E5"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+                    <Grid Grid.Row="3" Margin="0,6,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Пакет:"/>
+                            <TextBox x:Name="TxtPackageName" Width="320" Margin="4,0,0,0"/>
+                            <Button Content="🗑 Удалить" Width="110" Margin="6,0,0,0" Click="BtnUninstall_Click" ToolTip="Удалить приложение с устройства (adb uninstall). Данные будут потеряны."/>
+                            <Button Content="❄ Заморозить" Width="130" Margin="6,0,0,0" Click="BtnFreeze_Click"
+                                    ToolTip="pm disable-user --user 0 &lt;пакет&gt;"/>
+                            <Button Content="☀ Разморозить" Width="140" Margin="6,0,0,0" Click="BtnUnfreeze_Click"
+                                    ToolTip="pm enable &lt;пакет&gt;"/>
+                            <Button Content="ℹ Инфо" Width="80" Margin="6,0,0,0" Click="BtnPackageInfo_Click" ToolTip="Подробная информация о пакете (dumpsys package)"/>
+                            <Button Content="🚀 Запустить" Width="110" Margin="6,0,0,0" Click="BtnPackageLaunch_Click" ToolTip="Запустить приложение на устройстве"/>
+                        </StackPanel>
+                        <TextBox x:Name="TxtApkOutput" Grid.Row="1" Height="90" Margin="0,6,0,0"
+                                 IsReadOnly="True" FontFamily="Consolas"
+                                 VerticalScrollBarVisibility="Auto" AcceptsReturn="True"/>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+                        <TabItem Header="Детектор">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,8">
+                        <Button x:Name="BtnWatchToggle" Content="▶ Начать отслеживание"
+                                Width="200" Click="BtnWatchToggle_Click"
+                                ToolTip="Запустить/остановить мониторинг активного приложения"/>
+                        <TextBlock Text="интервал (мс):" Margin="14,0,4,0"/>
+                        <TextBox x:Name="TxtWatchInterval" Width="70" Text="500"/>
+                        <Button Content="OK" Width="50" Margin="4,0,0,0" Click="BtnWatchApply_Click"
+                                ToolTip="Применить интервал. Минимум 200 мс, максимум 10000 мс."/>
+                        <CheckBox x:Name="ChkWatchNotify" Content="Уведомления" Margin="12,0,0,0" IsChecked="False"
+                                  ToolTip="Показывать всплывающее окно при смене активного приложения"/>
+                        <TextBlock x:Name="TxtWatchStatus" Margin="12,0,0,0"
+                                   Foreground="{DynamicResource TextSecondary}"/>
+                    </StackPanel>
+
+                    <Border Grid.Row="1"
+                            BorderBrush="{DynamicResource BorderColor}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="12,8"
+                            Margin="0,0,0,8">
+                        <StackPanel>
+                            <TextBlock Text="Активное приложение (на переднем плане):"
+                                       Foreground="{DynamicResource TextSecondary}"/>
+                            <TextBlock x:Name="TxtWatchCurrent"
+                                       Text="(не запущено)"
+                                       FontSize="20" FontWeight="SemiBold"
+                                       FontFamily="Consolas"
+                                       Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Grid Grid.Column="0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Обнаруженные приложения (по мере появления):"
+                                       FontWeight="SemiBold"/>
+                            <ListBox x:Name="LstWatchDetected" Grid.Row="1" Margin="0,4,0,0">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Margin="2,3">
+                                            <TextBlock DockPanel.Dock="Right"
+                                                       Text="{Binding Badge}"
+                                                       Foreground="{Binding BadgeColor}"
+                                                       FontWeight="SemiBold"
+                                                       Margin="8,0,0,0"/>
+                                            <TextBlock Text="{Binding Name}"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+
+                        <Grid Grid.Column="2">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Журнал:" FontWeight="SemiBold"/>
+                            <TextBox x:Name="TxtWatchLog" Grid.Row="1" Margin="0,4,0,0"
+                                     IsReadOnly="True" FontFamily="Consolas"
+                                     VerticalScrollBarVisibility="Auto" AcceptsReturn="True"/>
+                        </Grid>
+                    </Grid>
+
+                    <WrapPanel Grid.Row="3" Margin="0,8,0,0">
+                        <Button Content="❄ Заморозить выбранное" Width="200" Click="BtnWatchFreeze_Click"
+                                ToolTip="pm disable-user --user 0 — приложение исчезнет, данные сохранятся"/>
+                        <Button Content="☀ Разморозить выбранное" Width="200" Margin="6,0,0,0"
+                                Click="BtnWatchUnfreeze_Click"
+                                ToolTip="pm enable — вернуть замороженное приложение"/>
+                        <Button Content="🗑 Удалить выбранное" Width="180" Margin="6,0,0,0"
+                                Click="BtnWatchUninstall_Click"
+                                ToolTip="adb uninstall — полное удаление, данные будут потеряны"/>
+                        <Button Content="ℹ Инфо" Width="80" Margin="6,0,0,0"
+                                Click="BtnWatchInfo_Click"
+                                ToolTip="Показать подробности о пакете"/>
+                        <Button Content="🔍 Диагностика" Width="140" Margin="6,0,0,0"
+                                Click="BtnWatchDiag_Click"
+                                ToolTip="Показать, какие методы определения активного окна работают на этом устройстве"/>
+                        <Button Content="Очистить историю" Width="160" Margin="6,0,0,0"
+                                Click="BtnWatchClear_Click"
+                                ToolTip="Очистить список обнаруженных приложений и журнал"/>
+                    </WrapPanel>
+                </Grid>
+            </TabItem>
+<TabItem Header="Массово (APK)">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,8">
+                        <TextBlock Text="Папка с APK:"/>
+                        <TextBox x:Name="TxtApkFolder" Width="500" Margin="4,0,0,0"/>
+                        <Button Content="Обзор..." Width="90" Margin="6,0,0,0" Click="BtnApkFolderBrowse_Click" ToolTip="Выбрать папку с APK-файлами"/>
+                        <Button Content="⟳ Сканировать" Width="120" Margin="6,0,0,0" Click="BtnApkFolderScan_Click" ToolTip="Найти все .apk-файлы в выбранной папке"/>
+                    </StackPanel>
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Column="0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="APK-файлы" FontWeight="SemiBold"/>
+                            <ListBox x:Name="LstApkFiles" Grid.Row="1" Margin="0,4,0,0"
+                                     SelectionMode="Extended" DisplayMemberPath="Display"/>
+                            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,4,0,0">
+                                <Button Content="Выбрать все" Width="110" Click="BtnSelectAllApks_Click" ToolTip="Выделить все APK в списке слева (Ctrl+A)"/>
+                                <Button Content="Снять выбор" Width="110" Margin="4,0,0,0" Click="BtnClearApks_Click" ToolTip="Снять выделение в списке APK"/>
+                            </StackPanel>
+                        </Grid>
+                        <Grid Grid.Column="2">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Установленные приложения (3rd party)" FontWeight="SemiBold"/>
+                            <ListBox x:Name="LstPackagesMass" Grid.Row="1" Margin="0,4,0,0"
+                                     SelectionMode="Extended" DisplayMemberPath="Display">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem" >
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSuspicious}" Value="True">
+                                                <Setter Property="Foreground" Value="#E53935"/>
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsFrozen}" Value="True">
+                                                <Setter Property="Foreground" Value="#1E88E5"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                            </ListBox>
+                            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,4,0,0">
+                                <Button Content="Выбрать все" Width="110" Click="BtnSelectAllPkgs_Click" ToolTip="Выделить все установленные приложения (Ctrl+A)"/>
+                                <Button Content="Снять выбор" Width="110" Margin="4,0,0,0" Click="BtnClearPkgs_Click" ToolTip="Снять выделение в списке приложений"/>
+                                <Button Content="⟳ Обновить" Width="110" Margin="4,0,0,0" Click="BtnRefreshMassPkgs_Click" ToolTip="Обновить список установленных приложений"/>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                    <ProgressBar x:Name="PrgMass" Grid.Row="2" Margin="0,6,0,0"
+                                 Visibility="Collapsed" IsIndeterminate="False"/>
+                    <Grid Grid.Row="3" Margin="0,6,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Top">
+                            <Button Content="⬆ Установить выбранные APK" Width="240" Height="34"
+                                    Click="BtnMassInstall_Click" ToolTip="Установить все выделенные APK по очереди"/>
+                            <Button Content="🗑 Удалить выбранные приложения" Width="240" Height="34" Margin="0,6,0,0"
+                                    Click="BtnMassUninstall_Click" ToolTip="Удалить все выделенные приложения"/>
+                        </StackPanel>
+                        <TextBox x:Name="TxtMassLog" Grid.Column="1" Height="140" Margin="8,0,0,0"
+                                 IsReadOnly="True" FontFamily="Consolas"
+                                 VerticalScrollBarVisibility="Auto" AcceptsReturn="True"/>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Консоль ADB">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="2*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- КОНСОЛЬ -->
+                    <TextBox x:Name="TxtConsole" Grid.Row="0"
+                             IsReadOnly="True" FontFamily="Consolas"
+                             VerticalScrollBarVisibility="Auto" AcceptsReturn="True"/>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,6,0,0">
+                        <TextBlock Text="adb " FontFamily="Consolas" VerticalAlignment="Center"/>
+                        <TextBox x:Name="TxtCmd" Width="900" Margin="4,0,0,0"/>
+                        <Button Content="Выполнить" Width="120" Margin="6,0,0,0" Click="BtnRunCmd_Click"
+                                ToolTip="Выполнить команду adb. Если выбрано устройство — команда пойдёт с -s &lt;серийник&gt;."/>
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="2" Margin="0,6,0,0" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextSecondary}"
+                               Text="Примеры: devices | shell getprop ro.product.model | shell input tap 500 1000 | connect 192.168.1.100:5555 | install C:\app.apk | uninstall com.example | shell pm list packages | logcat -d | shell wm size"/>
+
+                    <Separator Grid.Row="3" Margin="0,10,0,6"/>
+
+                    <!-- NTP-БЛОК (результаты идут в общий журнал выше) -->
+                    <GroupBox Grid.Row="4" Header="NTP (синхронизация времени)">
+                        <StackPanel Margin="6">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="⟳ Обновить дату (force_refresh)" Width="240"
+                                        Click="BtnNtpRefresh_Click"
+                                        ToolTip="Принудительно синхронизировать время по NTP прямо сейчас. Результат — в журнале выше."/>
+                                <Button Content="📋 Список NTP-серверов" Width="200" Margin="6,0,0,0"
+                                        Click="BtnNtpList_Click"
+                                        ToolTip="Показать список NTP-серверов, вшитых в прошивку. Результат — в журнале выше."/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <TextBlock Text="Свой NTP-сервер:" VerticalAlignment="Center"/>
+                                <TextBox x:Name="TxtNtpServer" Width="300" Margin="6,0,0,0"/>
+                                <Button Content="✏ Указать" Width="110" Margin="6,0,0,0"
+                                        Click="BtnNtpSet_Click"
+                                        ToolTip="Задать свой NTP-сервер через settings put global ntp_server"/>
+                                <Button Content="↺ Сбросить" Width="110" Margin="6,0,0,0"
+                                        Click="BtnNtpReset_Click"
+                                        ToolTip="Сбросить настройку NTP-сервера до стандартной"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <CheckBox x:Name="ChkNtpAuto" Content="Авто-обновление"
+                                          VerticalAlignment="Center"
+                                          Checked="ChkNtpAuto_Changed"
+                                          Unchecked="ChkNtpAuto_Changed"/>
+                                <TextBlock Text="интервал (сек):" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                <TextBox x:Name="TxtNtpAutoSec" Width="85" Text="3600" Margin="4,0,0,0"/>
+                                <Button Content="OK" Width="55" Margin="4,0,0,0"
+                                        Click="BtnNtpAutoApply_Click"
+                                        ToolTip="Применить интервал авто-синхронизации"/>
+                                <TextBlock x:Name="TxtNtpAutoStatus" Margin="12,0,0,0"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Экран + Управление">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <WrapPanel Grid.Row="0" Margin="0,0,0,8">
+                        <Button Content="📷 Скриншот" Width="110" Click="BtnScreenshot_Click" ToolTip="Сделать скриншот экрана устройства (screencap -p)"/>
+                        <CheckBox x:Name="ChkAutoRefresh" Content="Авто" Margin="10,0,0,0"
+                                  Checked="ChkAutoRefresh_Changed"
+                                  Unchecked="ChkAutoRefresh_Changed"/>
+                        <TextBlock Text="задержка (мс):" Margin="4,0,0,0"/>
+                        <TextBox x:Name="TxtRefreshMs" Width="80" Text="1500" Margin="4,0,0,0"/>
+                        <Button Content="OK" Width="55" Margin="4,0,0,0" Click="BtnApplyDelay_Click" ToolTip="Применить задержку авто-обновления экрана"/>
+                        <TextBlock Text="Масштаб:" Margin="14,0,0,0"/>
+                        <Slider x:Name="SldZoom" Width="180" Minimum="0.05" Maximum="2.0" Value="0.3"/>
+                        <TextBlock x:Name="TxtZoomValue" Text="30%" Width="50" Margin="6,0,0,0"
+                                   Foreground="{DynamicResource TextSecondary}"/>
+                        <Button Content="100%" Width="70" Margin="6,0,0,0" Click="BtnZoom100_Click" ToolTip="Масштаб 1:1 — один пиксель устройства = один пиксель картинки"/>
+                        <Button Content="По окну" Width="90" Margin="6,0,0,0" Click="BtnZoomFit_Click" ToolTip="Вписать картинку в размер окна"/>
+                        <Button Content="💾 Сохранить PNG" Width="140" Margin="6,0,0,0" Click="BtnSavePng_Click" ToolTip="Сохранить последний скриншот в файл PNG"/>
+                        <TextBlock x:Name="TxtScreenSize" Margin="12,0,0,0"
+                                   Foreground="{DynamicResource TextSecondary}"/>
+                    </WrapPanel>
+                    <Border Grid.Row="1"
+                            BorderBrush="{DynamicResource BorderColor}"
+                            BorderThickness="1" CornerRadius="6">
+                        <ScrollViewer x:Name="ScrollScreen"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Auto"
+                                      PreviewMouseWheel="ScrollScreen_PreviewMouseWheel">
+                            <Image x:Name="ImgScreen" Stretch="Fill" Cursor="Cross"
+                                   MouseDown="ImgScreen_MouseDown"
+                                   MouseMove="ImgScreen_MouseMove"
+                                   MouseUp="ImgScreen_MouseUp"/>
+                        </ScrollViewer>
+                    </Border>
+                    <Grid Grid.Row="2" Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,10,0">
+                            <TextBlock Text="Свайп от (px):"/>
+                            <TextBox x:Name="TxtMinSwipe" Width="65" Text="20" Margin="4,0,0,0"/>
+                            <TextBlock Text="Длит.(мс):" Margin="8,0,0,0"/>
+                            <TextBox x:Name="TxtSwipeMs" Width="80" Text="300" Margin="4,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <TextBox x:Name="TxtInput" Width="260"/>
+                            <Button Content="Текст" Width="80" Margin="6,0,0,0" Click="BtnInput_Click" ToolTip="Отправить введённый текст на устройство (adb shell input text)"/>
+                            <Button Content="HOME" Width="70" Margin="6,0,0,0" Click="BtnHome_Click" ToolTip="Нажать кнопку «Домой» (KEYCODE_HOME)"/>
+                            <Button Content="BACK" Width="70" Margin="6,0,0,0" Click="BtnBack_Click" ToolTip="Нажать кнопку «Назад» (KEYCODE_BACK)"/>
+                            <Button Content="MENU" Width="70" Margin="6,0,0,0" Click="BtnMenu_Click" ToolTip="Открыть меню приложения (KEYCODE_MENU)"/>
+                            <TextBlock x:Name="TxtMousePos" Margin="12,0,0,0"
+                                       Foreground="{DynamicResource TextSecondary}"/>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Файлы (TC)">
+                <Grid Margin="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <TextBlock Text="ЛОКАЛЬНО" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                            <Button Content="↑" Width="30" Click="BtnLocalUp_Click" ToolTip="Вверх"/>
+                            <Button Content="⟳" Width="30" Margin="4,0,0,0" Click="BtnLocalRefresh_Click" ToolTip="Обновить"/>
+                            <Button Content="Обзор..." Width="80" Margin="4,0,0,0" Click="BtnLocalBrowse_Click" ToolTip="Выбрать локальную папку"/>
+                        </StackPanel>
+                        <TextBox x:Name="TxtLocalPath" Grid.Row="1" Margin="0,0,0,4"
+                                 KeyDown="TxtLocalPath_KeyDown"/>
+                        <ListBox x:Name="LstLocal" Grid.Row="2"
+                                 MouseDoubleClick="LstLocal_MouseDoubleClick"
+                                 DisplayMemberPath="Display"/>
+                    </Grid>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0,6,0">
+                        <Button Content="→" Width="60" Height="34" Margin="0,4"
+                                FontSize="18" FontWeight="Bold"
+                                Click="BtnUpload_Click" ToolTip="Отправить на телефон (push)"/>
+                        <Button Content="←" Width="60" Height="34" Margin="0,4"
+                                FontSize="18" FontWeight="Bold"
+                                Click="BtnDownload_Click" ToolTip="Скачать с телефона (pull)"/>
+                        <Button Content="Del" Width="60" Height="30" Margin="0,20,0,4"
+                                Click="BtnRemoteDelete_Click" ToolTip="Удалить на телефоне"/>
+                    </StackPanel>
+                    <Grid Grid.Column="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <TextBlock Text="ТЕЛЕФОН" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                            <Button Content="↑" Width="30" Click="BtnRemoteUp_Click" ToolTip="Вверх"/>
+                            <Button Content="⟳" Width="30" Margin="4,0,0,0" Click="BtnRemoteRefresh_Click" ToolTip="Обновить"/>
+                        </StackPanel>
+                        <TextBox x:Name="TxtRemotePath" Grid.Row="1" Margin="0,0,0,4" Text="/sdcard/"
+                                 KeyDown="TxtRemotePath_KeyDown"/>
+                        <ListBox x:Name="LstRemote" Grid.Row="2"
+                                 MouseDoubleClick="LstRemote_MouseDoubleClick"
+                                 DisplayMemberPath="Display"/>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Logcat">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                        <Button Content="Дамп (logcat -d)" Width="150" Click="BtnLogcatDump_Click" ToolTip="Показать накопленные логи устройства (logcat -d)"/>
+                        <Button Content="Очистить (logcat -c)" Width="150" Margin="6,0,0,0" Click="BtnLogcatClear_Click" ToolTip="Очистить буфер логов на устройстве (logcat -c)"/>
+                        <TextBlock Text="Тег:" Margin="12,0,4,0"/>
+                        <TextBox x:Name="TxtLogcatTag" Width="200"/>
+                        <Button Content="Фильтр" Width="100" Margin="6,0,0,0" Click="BtnLogcatTag_Click" ToolTip="Показать логи только с указанным тегом"/>
+                    </StackPanel>
+                    <TextBox x:Name="TxtLogcat" Grid.Row="1" IsReadOnly="True"
+                             FontFamily="Consolas" VerticalScrollBarVisibility="Auto"
+                             AcceptsReturn="True"/>
+                </Grid>
+            </TabItem>
+
+        </TabControl>
+    </Grid>
+</Window>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

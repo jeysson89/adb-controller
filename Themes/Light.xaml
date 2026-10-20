@@ -1,0 +1,24 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="WindowBg"        Color="#F4F5F7"/>
+    <SolidColorBrush x:Key="PanelBg"         Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="BorderColor"     Color="#E2E4E9"/>
+    <SolidColorBrush x:Key="TextPrimary"     Color="#18191C"/>
+    <SolidColorBrush x:Key="TextSecondary"   Color="#70737A"/>
+    <SolidColorBrush x:Key="Accent"          Color="#2563EB"/>
+    <SolidColorBrush x:Key="AccentHover"     Color="#1D4ED8"/>
+    <SolidColorBrush x:Key="AccentPressed"   Color="#1E40AF"/>
+    <SolidColorBrush x:Key="ButtonBg"        Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="ButtonBorder"    Color="#D6D9E0"/>
+    <SolidColorBrush x:Key="ButtonHover"     Color="#EEF3FC"/>
+    <SolidColorBrush x:Key="ButtonPressed"   Color="#DDE8F9"/>
+    <SolidColorBrush x:Key="InputBg"         Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="InputBorder"     Color="#D6D9E0"/>
+    <SolidColorBrush x:Key="ItemHover"       Color="#EEF3FC"/>
+    <SolidColorBrush x:Key="ItemSelected"    Color="#D9E5FA"/>
+    <SolidColorBrush x:Key="TabStripBg"      Color="#EBEDF1"/>
+    <SolidColorBrush x:Key="TabSelectedBg"   Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="TabHoverBg"      Color="#E1E6F2"/>
+    <SolidColorBrush x:Key="ScrollThumb"     Color="#C8CBD2"/>
+    <SolidColorBrush x:Key="HeaderBg"        Color="#FFFFFF"/>
+</ResourceDictionary>

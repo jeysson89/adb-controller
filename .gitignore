@@ -1,0 +1,38 @@
+# Сборка
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+*.bin
+*.vsix
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/
+*.userprefs
+
+# Готовые сборки
+dist/
+publish/
+
+# Вендорённые бинарники adb — тяжёлые и обновляются отдельно.
+# Подготовьте папку скриптом tools\get-platform-tools.ps1
+tools/platform-tools/
+
+# Мусор
+*.tmp
+*.bak
+*.log
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Прочее
+*.snk
+*.pfx
+*.p12
