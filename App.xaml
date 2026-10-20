@@ -24,7 +24,7 @@
             </Style>
 
             <!-- Кнопка -->
-            <Style TargetType="Button">
+            <Style TargetType="Button" x:Key="BaseButtonStyle">
             <Setter Property="ToolTipService.InitialShowDelay" Value="300"/>
             <Setter Property="ToolTipService.ShowDuration" Value="15000"/>
                 <Setter Property="Background" Value="{DynamicResource ButtonBg}"/>
@@ -61,6 +61,28 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+
+            <!--
+                Компактная кнопка-иконка. Без внутренних отступов: при Padding="12,6"
+                на кнопке шириной 30 px на глиф остаётся всего 6 px и стрелка
+                выглядит обрезанной.
+            -->
+            <Style TargetType="Button" x:Key="IconButton" BasedOn="{StaticResource BaseButtonStyle}">
+                <Setter Property="Width" Value="32"/>
+                <Setter Property="Height" Value="28"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="FontSize" Value="15"/>
+                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+            </Style>
+
+            <!--
+                Иконки нарисованы геометрией, а не символами шрифта: в Segoe UI
+                Variable нет глифов U+2191/U+21BB, и стрелки выглядели как «1» и «‹».
+                Геометрия рисуется одинаково в любой системе.
+            -->
+            <Geometry x:Key="IconUp">M 8,12.5 L 8,3.5 M 4.3,7.2 L 8,3.5 L 11.7,7.2</Geometry>
+            <Geometry x:Key="IconRefresh">M 12.6,9 A 4.6,4.6 0 1 1 8,4.4 M 6.2,2.2 L 10,4.4 L 6.2,6.6</Geometry>
 
             <!-- TextBox -->
             <Style TargetType="TextBox">

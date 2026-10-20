@@ -707,8 +707,22 @@
                         </Grid.RowDefinitions>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                             <TextBlock Text="ЛОКАЛЬНО" FontWeight="SemiBold" Margin="0,0,8,0"/>
-                            <Button Content="↑" Width="30" Click="BtnLocalUp_Click" ToolTip="Вверх"/>
-                            <Button Content="⟳" Width="30" Margin="4,0,0,0" Click="BtnLocalRefresh_Click" ToolTip="Обновить"/>
+                            <Button Style="{StaticResource IconButton}"
+                                    Click="BtnLocalUp_Click" ToolTip="Вверх">
+                                <Path Width="16" Height="16" Stretch="None"
+                                      Data="{StaticResource IconUp}"
+                                      Stroke="{DynamicResource TextPrimary}" StrokeThickness="1.7"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round"/>
+                            </Button>
+                            <Button Style="{StaticResource IconButton}" Margin="4,0,0,0"
+                                    Click="BtnLocalRefresh_Click" ToolTip="Обновить">
+                                <Path Width="16" Height="16" Stretch="None"
+                                      Data="{StaticResource IconRefresh}"
+                                      Stroke="{DynamicResource TextPrimary}" StrokeThickness="1.7"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round"/>
+                            </Button>
                             <Button Content="Обзор..." Width="80" Margin="4,0,0,0" Click="BtnLocalBrowse_Click" ToolTip="Выбрать локальную папку"/>
                         </StackPanel>
                         <TextBox x:Name="TxtLocalPath" Grid.Row="1" Margin="0,0,0,4"
@@ -735,8 +749,22 @@
                         </Grid.RowDefinitions>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                             <TextBlock Text="ТЕЛЕФОН" FontWeight="SemiBold" Margin="0,0,8,0"/>
-                            <Button Content="↑" Width="30" Click="BtnRemoteUp_Click" ToolTip="Вверх"/>
-                            <Button Content="⟳" Width="30" Margin="4,0,0,0" Click="BtnRemoteRefresh_Click" ToolTip="Обновить"/>
+                            <Button Style="{StaticResource IconButton}"
+                                    Click="BtnRemoteUp_Click" ToolTip="Вверх">
+                                <Path Width="16" Height="16" Stretch="None"
+                                      Data="{StaticResource IconUp}"
+                                      Stroke="{DynamicResource TextPrimary}" StrokeThickness="1.7"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round"/>
+                            </Button>
+                            <Button Style="{StaticResource IconButton}" Margin="4,0,0,0"
+                                    Click="BtnRemoteRefresh_Click" ToolTip="Обновить">
+                                <Path Width="16" Height="16" Stretch="None"
+                                      Data="{StaticResource IconRefresh}"
+                                      Stroke="{DynamicResource TextPrimary}" StrokeThickness="1.7"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round"/>
+                            </Button>
                         </StackPanel>
                         <TextBox x:Name="TxtRemotePath" Grid.Row="1" Margin="0,0,0,4" Text="/sdcard/"
                                  KeyDown="TxtRemotePath_KeyDown"/>
