@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -40,11 +40,14 @@ namespace AdbController
         public bool IsFrozen { get; set; }
         public bool IsSuspicious { get; set; }
 
+        /// <summary>Пакет удалён для текущего пользователя (pm uninstall --user 0).</summary>
+        public bool IsRemoved { get; set; }
+
         public string Display
         {
             get
             {
-                var prefix = IsFrozen ? "\u2744 \U0001F4E6 " : "\U0001F4E6 ";
+                var prefix = IsRemoved ? "\U0001F5D1 " : (IsFrozen ? "\u2744 \U0001F4E6 " : "\U0001F4E6 ");
                 var suffix = IsSuspicious ? "   \u26A0" : "";
                 return prefix + Name + suffix;
             }
@@ -120,6 +123,7 @@ namespace AdbController
             InitializeComponent();
 
             LstWatchDetected.ItemsSource = _watchDetected;
+            LstBloat.ItemsSource = _bloatItems;
             SldZoom.ValueChanged += SldZoom_Changed;
 
             ApplySettings();
@@ -815,7 +819,8 @@ namespace AdbController
             {
                 RefreshRemoteAsync(),
                 RefreshMassPackagesAsync(),
-                RefreshMonitorAsync()
+                RefreshMonitorAsync(),
+                RefreshBloatAsync()
             };
             if (ChkAutoLoadPackages?.IsChecked == true)
                 tasks.Add(RefreshPackagesAsync());
@@ -1979,62 +1984,320 @@ namespace AdbController
             var device = SelectedDevice;
             if (device == null) return;
             bool withSystem = ChkSystemApps.IsChecked == true;
+            bool showRemoved = ChkShowRemoved != null && ChkShowRemoved.IsChecked == true;
             var cmd = withSystem ? "shell pm list packages" : "shell pm list packages -3";
 
             try
             {
                 var resTask = RunAdbOnDeviceAsync(device, cmd);
                 var frozenTask = RunAdbOnDeviceAsync(device, "shell pm list packages -d");
-                await Task.WhenAll(resTask, frozenTask);
+
+                // Чтобы отличить «удалён для пользователя» от «нет на устройстве»,
+                // нужны два полных списка: установленные для пользователя и все
+                // известные системе (pm list packages -u).
+                var installedTask = showRemoved
+                    ? RunAdbOnDeviceAsync(device, "shell pm list packages")
+                    : Task.FromResult(new AdbResult());
+                var knownTask = showRemoved
+                    ? RunAdbOnDeviceAsync(device, "shell pm list packages -u")
+                    : Task.FromResult(new AdbResult());
+
+                await Task.WhenAll(resTask, frozenTask, installedTask, knownTask);
                 var res = resTask.Result.Output;
                 var frozenRes = frozenTask.Result.Output;
 
-                var items = BuildPackageList(res, frozenRes);
+                var removed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                if (showRemoved)
+                {
+                    var installed = ParsePackageNames(installedTask.Result.Output);
+                    foreach (var p in ParsePackageNames(knownTask.Result.Output))
+                        if (!installed.Contains(p)) removed.Add(p);
+                }
+
+                var items = BuildPackageList(res, frozenRes, removed, showRemoved);
 
                 if (SelectedDevice != device) return;
 
                 LstPackages.ItemsSource = items;
                 int frozenCount = items.Count(x => x.IsFrozen);
                 int suspCount = items.Count(x => x.IsSuspicious);
+                int removedCount = items.Count(x => x.IsRemoved);
                 TxtPackageCount.Text = (withSystem
                     ? $"{items.Count} пакетов (вкл. системные)"
                     : $"{items.Count} пакетов (только 3rd party)")
-                    + $", заморожено: {frozenCount}, подозрительных: {suspCount}";
+                    + $", заморожено: {frozenCount}, подозрительных: {suspCount}"
+                    + (removedCount > 0 ? $", удалено для пользователя: {removedCount}" : "");
             }
             catch { }
         }
 
         /// <summary>
-        /// Собирает список пакетов из вывода "pm list packages" и "pm list packages -d".
+        /// Разбирает вывод "pm list packages" в множество имён пакетов.
         /// </summary>
-        private static List<PackageEntry> BuildPackageList(string packagesOutput, string frozenOutput)
+        private static HashSet<string> ParsePackageNames(string output)
         {
-            var frozen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var line in frozenOutput.Split('\n'))
-            {
-                var t = line.Trim();
-                if (!t.StartsWith("package:")) continue;
-                frozen.Add(t.Substring("package:".Length).Trim());
-            }
+            var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (string.IsNullOrEmpty(output)) return set;
 
-            var items = new List<PackageEntry>();
-            foreach (var line in packagesOutput.Split('\n'))
+            foreach (var line in output.Split('\n'))
             {
                 var t = line.Trim();
                 if (!t.StartsWith("package:")) continue;
                 var name = t.Substring("package:".Length).Trim();
-                if (name.Length == 0) continue;
+                if (name.Length > 0) set.Add(name);
+            }
+            return set;
+        }
+
+        /// <summary>
+        /// Собирает список пакетов из вывода "pm list packages" и "pm list packages -d".
+        /// </summary>
+        private static List<PackageEntry> BuildPackageList(
+            string packagesOutput, string frozenOutput,
+            HashSet<string>? removed = null, bool includeRemoved = false)
+        {
+            var frozen = ParsePackageNames(frozenOutput);
+            var items = new List<PackageEntry>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var name in ParsePackageNames(packagesOutput))
+            {
+                seen.Add(name);
                 items.Add(new PackageEntry
                 {
                     Name = name,
                     IsFrozen = frozen.Contains(name),
-                    IsSuspicious = IsSuspiciousPackage(name)
+                    IsSuspicious = IsSuspiciousPackage(name),
+                    IsRemoved = removed?.Contains(name) == true
                 });
             }
+
+            if (includeRemoved && removed != null)
+            {
+                foreach (var name in removed)
+                {
+                    if (seen.Contains(name)) continue;
+                    items.Add(new PackageEntry
+                    {
+                        Name = name,
+                        IsRemoved = true,
+                        IsSuspicious = IsSuspiciousPackage(name)
+                    });
+                }
+            }
+
             return items.OrderBy(x => x.Name).ToList();
         }
 
         private async void ChkSystemApps_Changed(object sender, RoutedEventArgs e) => await RefreshPackagesAsync();
+
+        private async void ChkShowRemoved_Changed(object sender, RoutedEventArgs e) => await RefreshPackagesAsync();
+
+        /// <summary>
+        /// Пакеты, выбранные в списке, — либо выделенные строки, либо имя из поля ввода.
+        /// </summary>
+        private List<string> GetSelectedPackages()
+        {
+            var list = new List<string>();
+
+            if (LstPackages.SelectedItems != null)
+            {
+                foreach (var item in LstPackages.SelectedItems)
+                {
+                    if (item is PackageEntry pe && !list.Contains(pe.Name)) list.Add(pe.Name);
+                }
+            }
+
+            if (list.Count == 0)
+            {
+                var typed = TxtPackageName.Text.Trim();
+                if (typed.Length > 0) list.Add(typed);
+            }
+            return list;
+        }
+
+        /// <summary>
+        /// Удаление пакета для текущего пользователя (pm uninstall --user 0).
+        /// Root не нужен: приложение исчезает с устройства, но система и раздел
+        /// /system не затрагиваются — пакет можно вернуть через install-existing.
+        /// </summary>
+        private async void BtnRemoveForUser_Click(object sender, RoutedEventArgs e)
+        {
+            var device = SelectedDevice;
+            if (device == null) { MessageBox.Show("Выберите устройство"); return; }
+
+            var packages = GetSelectedPackages();
+            if (packages.Count == 0) { MessageBox.Show("Выберите пакет в списке или введите имя"); return; }
+
+            var dlg = packages.Count == 1
+                ? new RemovePackageDialog(packages[0], $"Удалить «{packages[0]}»?", 1)
+                : new RemovePackageDialog("", $"Удалить {packages.Count} пакетов?", packages.Count);
+            if (dlg.ShowDialog() != true) return;
+
+            var keep = dlg.KeepData ? "-k " : "";
+            TxtApkOutput.Text = "";
+            int ok = 0, fail = 0;
+
+            foreach (var pkg in packages)
+            {
+                TxtApkOutput.AppendText($"👤 {pkg} ... ");
+                var res = await RunAdbOnDeviceAsync(device, $"shell pm uninstall {keep}--user 0 {pkg}");
+                var text = res.Output.Trim();
+                if (text.Contains("Success", StringComparison.OrdinalIgnoreCase))
+                {
+                    ok++;
+                    TxtApkOutput.AppendText("✔ удалён для пользователя\r\n");
+                }
+                else
+                {
+                    fail++;
+                    TxtApkOutput.AppendText("✖ " + text + "\r\n");
+                }
+                TxtApkOutput.ScrollToEnd();
+            }
+
+            TxtApkOutput.AppendText($"\r\n=== Удалено для пользователя: {ok}, ошибок: {fail} ===\r\n");
+            await RefreshPackagesAsync();
+        }
+
+        /// <summary>
+        /// Возвращает пакет, удалённый для пользователя (cmd package install-existing).
+        /// </summary>
+        private async void BtnRestorePackage_Click(object sender, RoutedEventArgs e)
+        {
+            var device = SelectedDevice;
+            if (device == null) { MessageBox.Show("Выберите устройство"); return; }
+
+            var packages = GetSelectedPackages();
+            if (packages.Count == 0) { MessageBox.Show("Выберите пакет в списке или введите имя"); return; }
+
+            TxtApkOutput.Text = "";
+            int ok = 0, fail = 0;
+
+            foreach (var pkg in packages)
+            {
+                TxtApkOutput.AppendText($"♻️ {pkg} ... ");
+                var res = await RunAdbOnDeviceAsync(device, $"shell cmd package install-existing {pkg}");
+                var text = res.Output.Trim();
+                if (text.Contains("installed for user", StringComparison.OrdinalIgnoreCase))
+                {
+                    ok++;
+                    TxtApkOutput.AppendText("✔ восстановлен\r\n");
+                }
+                else
+                {
+                    fail++;
+                    TxtApkOutput.AppendText("✖ " + text + "\r\n");
+                }
+                TxtApkOutput.ScrollToEnd();
+            }
+
+            TxtApkOutput.AppendText($"\r\n=== Восстановлено: {ok}, ошибок: {fail} ===\r\n");
+            await RefreshPackagesAsync();
+        }
+
+        // =============== МУСОР (типовой bloatware) ===============
+        private readonly System.Collections.ObjectModel.ObservableCollection<BloatItem> _bloatItems = new();
+
+        private void InitBloatItems()
+        {
+            if (_bloatItems.Count > 0) return;
+
+            foreach (var group in BloatwareCatalog.Groups)
+            {
+                foreach (var spec in group.Packages)
+                {
+                    _bloatItems.Add(new BloatItem
+                    {
+                        Package = spec.Package,
+                        Title = spec.Title,
+                        Note = spec.Note,
+                        Group = group.Title
+                    });
+                }
+            }
+        }
+
+        private async Task RefreshBloatAsync()
+        {
+            InitBloatItems();
+
+            var device = SelectedDevice;
+            if (device == null)
+            {
+                TxtBloatCount.Text = "Выберите устройство";
+                return;
+            }
+
+            var res = await RunAdbOnDeviceAsync(device, "shell pm list packages");
+            var installed = ParsePackageNames(res.Output);
+
+            foreach (var item in _bloatItems)
+                item.Installed = installed.Contains(item.Package);
+
+            int found = _bloatItems.Count(i => i.Installed);
+            TxtBloatCount.Text = $"найдено на устройстве: {found} из {_bloatItems.Count}";
+        }
+
+        private async void BtnBloatRefresh_Click(object sender, RoutedEventArgs e) => await RefreshBloatAsync();
+
+        private void BtnBloatSelectAll_Click(object sender, RoutedEventArgs e)
+        {
+            InitBloatItems();
+            foreach (var item in _bloatItems)
+                if (item.Installed) item.Selected = true;
+        }
+
+        private void BtnBloatClearAll_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (var item in _bloatItems) item.Selected = false;
+        }
+
+        private async void BtnBloatRemove_Click(object sender, RoutedEventArgs e)
+        {
+            var device = SelectedDevice;
+            if (device == null) { MessageBox.Show("Выберите устройство"); return; }
+
+            InitBloatItems();
+            var selected = _bloatItems.Where(i => i.Selected && i.Installed).ToList();
+            if (selected.Count == 0)
+            {
+                MessageBox.Show("Отметьте пакеты и нажмите «Проверить наличие»");
+                return;
+            }
+
+            var dlg = new RemovePackageDialog("", $"Удалить {selected.Count} отмеченных пакетов?", selected.Count);
+            if (dlg.ShowDialog() != true) return;
+
+            var keep = dlg.KeepData ? "-k " : "";
+            TxtBloatLog.Text = $"=== Удаление {selected.Count} пакетов ===\r\n";
+            int ok = 0, fail = 0;
+
+            foreach (var item in selected)
+            {
+                TxtBloatLog.AppendText($"{item.Package} ... ");
+                var res = await RunAdbOnDeviceAsync(device, $"shell pm uninstall {keep}--user 0 {item.Package}");
+                var text = res.Output.Trim();
+                if (text.Contains("Success", StringComparison.OrdinalIgnoreCase))
+                {
+                    ok++;
+                    TxtBloatLog.AppendText("✔\r\n");
+                }
+                else
+                {
+                    fail++;
+                    TxtBloatLog.AppendText("✖ " + text + "\r\n");
+                }
+                TxtBloatLog.ScrollToEnd();
+            }
+
+            TxtBloatLog.AppendText($"\r\n=== Удалено для пользователя: {ok}, ошибок: {fail} ===\r\n");
+            TxtBloatLog.AppendText("Вернуть пакеты можно на вкладке APK → «♻️ Восстановить».\r\n");
+            TxtBloatLog.ScrollToEnd();
+
+            await RefreshBloatAsync();
+            await RefreshPackagesAsync();
+        }
 
         private async void BtnFreeze_Click(object sender, RoutedEventArgs e)
         {

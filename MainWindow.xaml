@@ -326,6 +326,11 @@
                         <CheckBox x:Name="ChkAutoLoadPackages"
                                   Content="Авто-загрузка"
                                   Margin="12,0,0,0" IsChecked="True"/>
+                        <CheckBox x:Name="ChkShowRemoved"
+                                  Content="Показать удалённые"
+                                  Margin="12,0,0,0" IsChecked="False"
+                                  Checked="ChkShowRemoved_Changed"
+                                  Unchecked="ChkShowRemoved_Changed"/>
                         <TextBlock x:Name="TxtPackageCount" Margin="12,0,0,0"
                                    Foreground="{DynamicResource TextSecondary}"/>
                     </StackPanel>
@@ -345,6 +350,10 @@
                                     <DataTrigger Binding="{Binding IsFrozen}" Value="True">
                                         <Setter Property="Foreground" Value="#1E88E5"/>
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsRemoved}" Value="True">
+                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+                                        <Setter Property="FontStyle" Value="Italic"/>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </ListBox.ItemContainerStyle>
@@ -362,6 +371,12 @@
                                     ToolTip="pm disable-user --user 0 &lt;пакет&gt;"/>
                             <Button Content="☀ Разморозить" Width="140" Margin="6,0,0,0" Click="BtnUnfreeze_Click"
                                     ToolTip="pm enable &lt;пакет&gt;"/>
+                            <Button Content="👤 Удалить для себя" Width="150" Margin="6,0,0,0"
+                                    Click="BtnRemoveForUser_Click"
+                                    ToolTip="pm uninstall --user 0 — убрать приложение с устройства без root. Система не затрагивается, пакет можно восстановить."/>
+                            <Button Content="♻️ Восстановить" Width="140" Margin="6,0,0,0"
+                                    Click="BtnRestorePackage_Click"
+                                    ToolTip="cmd package install-existing — вернуть пакет, удалённый для пользователя"/>
                             <Button Content="ℹ Инфо" Width="80" Margin="6,0,0,0" Click="BtnPackageInfo_Click" ToolTip="Подробная информация о пакете (dumpsys package)"/>
                             <Button Content="🚀 Запустить" Width="110" Margin="6,0,0,0" Click="BtnPackageLaunch_Click" ToolTip="Запустить приложение на устройстве"/>
                         </StackPanel>
@@ -369,6 +384,66 @@
                                  IsReadOnly="True" FontFamily="Consolas"
                                  VerticalScrollBarVisibility="Auto" AcceptsReturn="True"/>
                     </Grid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Мусор">
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="⟳ Проверить наличие" Width="170" Click="BtnBloatRefresh_Click"
+                                ToolTip="Проверить, какие из типовых системных приложений есть на устройстве"/>
+                        <Button Content="🗑 Удалить отмеченные" Width="190" Margin="6,0,0,0"
+                                Click="BtnBloatRemove_Click"
+                                ToolTip="Удалить отмеченные пакеты для текущего пользователя (pm uninstall --user 0). Без root, полностью обратимо."/>
+                        <Button Content="☑ Выделить все" Width="130" Margin="6,0,0,0" Click="BtnBloatSelectAll_Click"
+                                ToolTip="Отметить все найденные на устройстве пакеты"/>
+                        <Button Content="☐ Снять выбор" Width="130" Margin="6,0,0,0" Click="BtnBloatClearAll_Click"/>
+                        <TextBlock x:Name="TxtBloatCount" Margin="12,0,0,0"
+                                   Foreground="{DynamicResource TextSecondary}"/>
+                    </StackPanel>
+                    <TextBlock Grid.Row="1" Margin="0,8,0,0" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextSecondary}" FontSize="12"
+                               Text="Удаление выполняется для текущего пользователя: приложение исчезает с устройства и его данные освобождаются, но система и раздел /system не затрагиваются — пакет можно вернуть кнопкой «Восстановить» на вкладке APK. Root не требуется и не используется."/>
+                    <ListBox x:Name="LstBloat" Grid.Row="2" Margin="0,6,0,0" SelectionMode="Multiple">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="2,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox IsChecked="{Binding Selected, Mode=TwoWay}"
+                                              IsEnabled="{Binding Installed}"
+                                              VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="{Binding Group}"
+                                                   Foreground="{DynamicResource Accent}"
+                                                   FontSize="10" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding Note}"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   FontSize="11" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding Package}"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   FontSize="10" FontFamily="Consolas"/>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="2" Text="{Binding StatusText}"
+                                               Foreground="{DynamicResource TextSecondary}"
+                                               VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <TextBox x:Name="TxtBloatLog" Grid.Row="3" Height="110" Margin="0,6,0,0"
+                             IsReadOnly="True" FontFamily="Consolas"
+                             VerticalScrollBarVisibility="Auto" AcceptsReturn="True"/>
                 </Grid>
             </TabItem>
 
