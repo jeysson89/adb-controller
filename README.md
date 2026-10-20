@@ -1,10 +1,16 @@
 # AdbController
 
+[![Build](https://github.com/jeysson89/adb-controller/actions/workflows/release.yml/badge.svg)](https://github.com/jeysson89/adb-controller/actions/workflows/release.yml)
+[![Release](https://img.shields.io/github/v/release/jeysson89/adb-controller?label=Скачать%20.exe)](https://github.com/jeysson89/adb-controller/releases/latest)
+
 WPF-приложение для управления Android-устройством через `adb` — графическая обёртка
 над `adb shell`, `pm`, `dumpsys`, `input` и файловым доступом.
 
 Собирается в **один .exe**, который работает на любом компьютере с Windows x64:
 внутрь встроены .NET runtime и сам `adb.exe`, поэтому Android SDK устанавливать не нужно.
+
+> **Готовая сборка:** [Releases → последний релиз](https://github.com/jeysson89/adb-controller/releases/latest)
+> (`AdbController-win-x64.zip`, ~30 МБ в архиве) — собирается автоматически в CI.
 
 ---
 

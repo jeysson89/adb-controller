@@ -1,0 +1,70 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Сборка Windows x64
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Установка .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Подготовка platform-tools (adb)
+        # Бинарники adb не хранятся в репозитории (9 МБ) — подтягиваем их скриптом.
+        shell: pwsh
+        run: ./tools/get-platform-tools.ps1
+
+      - name: Сборка одного .exe
+        run: dotnet publish -c Release -o out --nologo
+
+      - name: Проверка результата
+        shell: pwsh
+        run: |
+          $exe = 'out/AdbController.exe'
+          if (-not (Test-Path $exe)) { throw "$exe не собран" }
+          $size = (Get-Item $exe).Length
+          Write-Host ("Размер сборки: {0:N1} MB" -f ($size / 1MB))
+
+      - name: Упаковка в zip
+        shell: pwsh
+        run: |
+          Compress-Archive -Path 'out/AdbController.exe' `
+                            -DestinationPath 'AdbController-win-x64.zip' -Force
+          $z = (Get-Item 'AdbController-win-x64.zip').Length
+          Write-Host ("Архив: {0:N1} MB" -f ($z / 1MB))
+
+      - name: Артефакт сборки
+        uses: actions/upload-artifact@v4
+        with:
+          name: AdbController-win-x64
+          path: AdbController-win-x64.zip
+          retention-days: 30
+
+      - name: Публикация релиза
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = '${{ github.ref_name }}'
+          gh release create $tag "AdbController-win-x64.zip" `
+            --title "AdbController $tag" `
+            --generate-notes `
+            --verify-tag `
+          || gh release upload $tag "AdbController-win-x64.zip" --clobber
