@@ -191,7 +191,11 @@ namespace AdbController
             if (TxtWifiIp != null) _settings.WifiIp = TxtWifiIp.Text;
             if (TxtWifiPort != null) _settings.WifiPort = TxtWifiPort.Text;
             if (TxtApkFolder != null) _settings.LastApkFolder = TxtApkFolder.Text;
-            _settings.LastDeviceSerial = SelectedDevice ?? "";
+
+            // Серийник не затираем, если сейчас ничего не выбрано: устройство может
+            // быть временно отключено, и при следующем запуске его нужно восстановить.
+            _settings.LastDeviceSerial = SelectedDevice ?? _settings.LastDeviceSerial;
+
             _settings.WinWidth = Width;
             _settings.WinHeight = Height;
 
@@ -1755,14 +1759,55 @@ namespace AdbController
             }
         }
 
-        // Разбор строки вывода "ls -la". Структура колонок:
-        //   права(10) ссылок владелец группа размер МЕСЯЦ ДЕНЬ ВРЕМЯ/ГОД ИМЯ
-        // Имя начинается с девятого поля — прежний код брал восьмое и в имя
-        // попадало время ("00:00 Download"), из-за чего push/pull ломались.
+        // Разбор строки вывода "ls -la".
+        //
+        // Блок даты бывает двух видов, и это ломает разбор по фиксированной позиции:
+        //   "drwxr-xr-x  2 root root  4096 Oct 20 22:30 Name"  — три поля даты
+        //   "drwxrws--- 3 u0_a2 media_rw 3452 2026-10-16 23:03 Name" — два поля
+        // Поэтому длину блока даты определяем по содержимому второго поля.
         private static readonly Regex LsLineRegex = new Regex(
             @"^(?<perms>[-dlbcps][-rwxsStT+@]{9})[+.]?\s+(?<nlink>\d+)\s+(?<owner>\S+)\s+(?<group>\S+)\s+" +
-            @"(?<size>\d+)\s+(?<mon>[A-Za-z]{3})\s+(?<day>\d{1,2})\s+(?<stamp>\S+)\s+(?<name>.*)$",
+            @"(?<size>\d+)\s+(?<d1>\S+)\s+(?<d2>\S+)(?<rest>.*)$",
             RegexOptions.Compiled);
+
+        private static readonly Regex LsRestRegex = new Regex(
+            @"^\s+(?<d3>\S+)\s+(?<name>.*)$", RegexOptions.Compiled);
+
+        /// <summary>
+        /// Разбирает строку "ls -la". Возвращает false, если строка не является
+        /// элементом листинга.
+        /// </summary>
+        private static bool TryParseLsLine(string line, out string name, out bool isDir, out long size)
+        {
+            name = "";
+            isDir = false;
+            size = 0;
+
+            var m = LsLineRegex.Match(line);
+            if (!m.Success) return false;
+
+            long.TryParse(m.Groups["size"].Value, out size);
+
+            var d2 = m.Groups["d2"].Value;
+            var rest = m.Groups["rest"].Value;
+
+            // "20" — это день месяца, значит дата занимает три поля ("Oct 20 22:30")
+            if (d2.Length is > 0 and <= 2 && d2.All(char.IsDigit))
+            {
+                var m3 = LsRestRegex.Match(rest);
+                if (!m3.Success) return false;
+                name = m3.Groups["name"].Value.Trim();
+            }
+            else
+            {
+                // "23:03" — это время, дата занимает два поля ("2026-10-16 23:03")
+                name = rest.TrimStart();
+            }
+
+            if (name.Length == 0 || name == "." || name == "..") return false;
+            isDir = m.Groups["perms"].Value.StartsWith("d");
+            return true;
+        }
 
         private async Task RefreshRemoteAsync()
         {
@@ -1779,19 +1824,13 @@ namespace AdbController
                     if (t.Length == 0) continue;
                     if (t.StartsWith("total ")) continue;
 
-                    var m = LsLineRegex.Match(t);
-                    if (!m.Success) continue;
-
-                    var name = m.Groups["name"].Value.Trim();
-                    if (name.Length == 0 || name == "." || name == "..") continue;
-
-                    long size = 0;
-                    long.TryParse(m.Groups["size"].Value, out size);
+                    if (!TryParseLsLine(t, out var name, out var isDir, out var size))
+                        continue;
 
                     items.Add(new FileEntry
                     {
                         Name = name,
-                        IsDir = m.Groups["perms"].Value.StartsWith("d"),
+                        IsDir = isDir,
                         Size = size
                     });
                 }
