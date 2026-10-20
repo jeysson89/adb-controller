@@ -24,7 +24,12 @@
             </Style>
 
             <!-- Кнопка -->
-            <Style TargetType="Button" x:Key="BaseButtonStyle">
+            <!--
+                ВАЖНО: у этого стиля не должно быть x:Key. Неявный стиль WPF
+                ищется по ключу typeof(Button) — если задать свой x:Key, стиль
+                перестаёт применяться ко всем кнопкам и они рисуются системными.
+            -->
+            <Style TargetType="Button">
             <Setter Property="ToolTipService.InitialShowDelay" Value="300"/>
             <Setter Property="ToolTipService.ShowDuration" Value="15000"/>
                 <Setter Property="Background" Value="{DynamicResource ButtonBg}"/>
@@ -67,7 +72,7 @@
                 на кнопке шириной 30 px на глиф остаётся всего 6 px и стрелка
                 выглядит обрезанной.
             -->
-            <Style TargetType="Button" x:Key="IconButton" BasedOn="{StaticResource BaseButtonStyle}">
+            <Style TargetType="Button" x:Key="IconButton" BasedOn="{StaticResource {x:Type Button}}">
                 <Setter Property="Width" Value="32"/>
                 <Setter Property="Height" Value="28"/>
                 <Setter Property="Padding" Value="0"/>
