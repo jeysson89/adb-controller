@@ -10,7 +10,7 @@ WPF-приложение для управления Android-устройств�
 внутрь встроены .NET runtime и сам `adb.exe`, поэтому Android SDK устанавливать не нужно.
 
 > **Готовая сборка:** [Releases → последний релиз](https://github.com/jeysson89/adb-controller/releases/latest)
-> (`AdbController-win-x64.zip`, ~30 МБ в архиве) — собирается автоматически в CI.
+> (один файл `AdbController.exe`, ~63 МБ) — собирается автоматически в CI.
 
 ---
 

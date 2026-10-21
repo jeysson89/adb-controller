@@ -41,19 +41,11 @@ jobs:
           $size = (Get-Item $exe).Length
           Write-Host ("Размер сборки: {0:N1} MB" -f ($size / 1MB))
 
-      - name: Упаковка в zip
-        shell: pwsh
-        run: |
-          Compress-Archive -Path 'out/AdbController.exe' `
-                            -DestinationPath 'AdbController-win-x64.zip' -Force
-          $z = (Get-Item 'AdbController-win-x64.zip').Length
-          Write-Host ("Архив: {0:N1} MB" -f ($z / 1MB))
-
       - name: Артефакт сборки
         uses: actions/upload-artifact@v7
         with:
           name: AdbController-win-x64
-          path: AdbController-win-x64.zip
+          path: out/AdbController.exe
           retention-days: 30
 
       - name: Публикация релиза
@@ -63,8 +55,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $tag = '${{ github.ref_name }}'
-          gh release create $tag "AdbController-win-x64.zip" `
+          gh release create $tag "out/AdbController.exe" `
             --title "AdbController $tag" `
             --generate-notes `
             --verify-tag `
-          || gh release upload $tag "AdbController-win-x64.zip" --clobber
+          || gh release upload $tag "out/AdbController.exe" --clobber
