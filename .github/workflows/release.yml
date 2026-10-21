@@ -50,7 +50,7 @@ jobs:
           Write-Host ("Архив: {0:N1} MB" -f ($z / 1MB))
 
       - name: Артефакт сборки
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: AdbController-win-x64
           path: AdbController-win-x64.zip
