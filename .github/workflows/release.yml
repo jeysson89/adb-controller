@@ -18,10 +18,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Установка .NET 10
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
 
@@ -50,7 +50,7 @@ jobs:
           Write-Host ("Архив: {0:N1} MB" -f ($z / 1MB))
 
       - name: Артефакт сборки
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: AdbController-win-x64
           path: AdbController-win-x64.zip
